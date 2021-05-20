@@ -1,9 +1,0 @@
-html,
-body,
-/*to set the style for the mapid in the html file*/
-#mapid {
-  width: 100%;
-  height: 100%;
-  padding: 0;
-  margin: 0;
-}
