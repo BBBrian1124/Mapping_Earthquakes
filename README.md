@@ -3,7 +3,8 @@
 # Challenge ReadME
 * Using Javascript, Leaflet and Mapbox we have created an interactive map showing Earthquake data with multiple layers to choose from 
 * There are 3 options that can be chosen which specify how the map layer visually looks like (i.e. satelite, street, or dark) as well as 3 options for what data to display (tectonic plate lines, all earthquake data and major earthquake data)
-* API calls are made to MapBox https://www.mapbox.com/ 
+* circleMarkers and Popups have been added to the visualization to show the magnitutde of each earthquake
+* API calls are made to MapBox https://www.mapbox.com/ to obtain the earthquake data
 
 # Appendix 
 [Challenge Repository Link] https://github.com/BBBrian1124/Mapping_Earthquakes/tree/main/Challenge/Earthquake_Challenge
