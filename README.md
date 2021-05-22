@@ -7,6 +7,8 @@
 
 # Appendix 
 [Challenge Repository Link] https://github.com/BBBrian1124/Mapping_Earthquakes/tree/main/Challenge/Earthquake_Challenge
+
 [Challange JS File] https://github.com/BBBrian1124/Mapping_Earthquakes/blob/main/Challenge/Earthquake_Challenge/static/js/challenge_logic_final.js
+
 [Challenge HTML File] https://github.com/BBBrian1124/Mapping_Earthquakes/blob/main/Challenge/Earthquake_Challenge/index.html
 * Lesson files are practice files from the UofT Boot Camp but contain similar material 
