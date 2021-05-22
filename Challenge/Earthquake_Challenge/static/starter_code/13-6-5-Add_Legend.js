@@ -1,0 +1,183 @@
+// Add console.log to check to see if our code is working.
+console.log("working");
+
+// HERE we are creating the layers that we will pass to our layercontrol 
+// layercontrol allows the user to pick which layer to display 
+// We create the tile layer that will be the background of our map by shortening the code above
+// rather than defining the ID ir style as a variable, we insert it directly into L.tilelayer
+let satelliteStreets = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v11/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+attribution: 'Map data © <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery (c) <a href="https://www.mapbox.com/">Mapbox</a>',
+    maxZoom: 18,
+    accessToken: API_KEY
+});
+
+// We create the dark view tile layer that will be an option for our map.
+let streets = L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+attribution: 'Map data © <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery (c) <a href="https://www.mapbox.com/">Mapbox</a>',
+    maxZoom: 18,
+    accessToken: API_KEY
+});
+
+// Create a base layer that holds both maps/layers
+// this will be passed to our control.layers as options to choose which layer to display on the map
+let baseMaps = {
+    "Satellite Streets": satelliteStreets,
+    "Streets": streets
+  };
+
+// Create the map object with center, zoom level and default layer.
+// recall this is another syntax to create the map object rather than the methods above
+// because we have created multiple layers to chosoe from, we will define the default map layer that loads in
+let map = L.map('mapid', {
+    center: [39.5, -98.5],
+    zoom: 3,
+    layers: [streets]
+})
+
+// Create the earthquake layer for our map.
+// layergroups allow us to add layers to a group rather than printing them to the map
+// this allows us to call the layer group rather to print it all
+// we will start by creating a new layer group
+let earthquakes = new L.layerGroup();
+
+// We define an object that contains the overlays of our earthquake layer
+let overlays = {
+  Earthquakes: earthquakes
+};
+
+// Pass our map layers into our layers control and add the layers control to the map.
+// Next using control.layers we are able to add our array of map layers as options to be chosen between on our web page
+L.control.layers(baseMaps, overlays).addTo(map);
+
+// https://earthquake.usgs.gov/ contains our EarthQuake data
+// navigate to the site --> then click on the "EarthQuake" link https://www.usgs.gov/natural-hazards/earthquake-hazards/earthquakes
+// --> then "Real-time Notifications, Feeds, and Web Services" https://earthquake.usgs.gov/earthquakes/feed/
+// --> then "GeoJSON Summary Feed" https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php
+// --> then all Earthquakes from the past 7 days https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson
+// info on Earthquate data https://earthquake.usgs.gov/data/comcat/data-eventterms.php
+
+
+// Retrieve the earthquake GeoJSON data from the URL 
+d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson").then(function(data) {
+
+// This function returns the style data for each of the earthquakes we plot on the map. 
+// We pass the magnitude of the earthquake into a function to calculate the radius.
+// here we pass the feature element which will take each feature from our json file
+function styleInfo(feature) {
+  // we return the variables/paramaters for the style 
+  return {
+    opacity: 1,
+    fillOpacity: 1,
+    // this is a function we will use to make the colour variable 
+    fillColor: getColor(feature.properties.mag),
+    color: "#000000",
+    // this is a function we will use to obtain the earthquakes magnitude and calculate the radius
+    radius: getRadius(feature.properties.mag),
+    stroke: true,
+    weight: 0.5
+  };
+}
+
+// This function determines the color of the circle based on the magnitude of the earthquake.
+function getColor(magnitude) {
+  if (magnitude > 5) {
+    return "#ea2c2c";
+  }
+  if (magnitude > 4) {
+    return "#ea822c";
+  }
+  if (magnitude > 3) {
+    return "#ee9c00";
+  }
+  if (magnitude > 2) {
+    return "#eecc00";
+  }
+  if (magnitude > 1) {
+    return "#d4ee00";
+  }
+  return "#98ee00";
+}
+
+// This function determines the radius of the earthquake marker based on its magnitude.
+// Earthquakes with a magnitude of 0 will be plotted with a radius of 1.
+// we pass the magnitutde value to the function, and if it is 0 then return 1 otherwise * by 4
+function getRadius(magnitude) {
+  if (magnitude === 0) {
+    return 1;
+  }
+  return magnitude * 4;
+}
+  // Creating a GeoJSON layer with the retrieved data.
+L.geoJson(data, {
+  // We turn each feature into a circleMarker on the map using pointToLayer
+  pointToLayer: function(feature, latlng) {
+              console.log(data);
+              return L.circleMarker(latlng);
+          },
+          // we can pass our style function as the style paramater since it returns all of the needed paramaters
+          style: styleInfo,
+    // We create a popup for each circleMarker to display the magnitude and
+    //  location of the earthquake after the marker has been created and styled.
+    onEachFeature: function(feature, layer) {
+      layer.bindPopup("Magnitude: " + feature.properties.mag + "<br>Location: " + feature.properties.place);
+    }
+  // the above code obtains and styles our earthquake data
+  // instead of adding the data above to the map, we add it to our earthquake variable 
+  // recall that this is a layergroup which can be toggled on and off
+  }).addTo(earthquakes);
+  // we then add the layergroup to the map, this allows us to be able to toggle whether we show this layer or not
+  earthquakes.addTo(map)
+});
+
+// Create a legend control object.
+let legend = L.control({
+  // this indicates the position of the legend 
+  position: "bottomright"
+});
+
+// Add the legend to the map by using .onAdd
+legend.onAdd = function() {
+  // the legend is added to the "div" element of the html file by using the DomUtil function
+  let div = L.DomUtil.create("div", "info legend");
+
+  // next we add an array that holds our colours for our magnititudes 
+  const magnitudes = [0, 1, 2, 3, 4, 5];
+  const colors = [
+    "#98ee00",
+    "#d4ee00",
+    "#eecc00",
+    "#ee9c00",
+    "#ea822c",
+    "#ea2c2c"
+  ];
+
+  // Looping through our intervals to generate a label with a colored square for each interval.
+  // first we loop through our magnitudes 
+  for (var i = 0; i < magnitudes.length; i++) {
+    console.log(colors[i]);
+    // as we loop though we add the colours from our colour array to the div element using div.innerHTML
+    div.innerHTML +=
+    // for each loop, we add the colour as the background for the <i> tag which is in our css sheet
+    // this is what will create the boxes on the legend that shows each colour 
+      "<i style='background: " + colors[i] + "'></i> " +
+    // this code creates the intervals/numbers on the legend 
+      // magnitudes[i] is what sets the starting number for the interval where i is the current itteration 
+      // the ? acts as a condensed if statement
+        // the code before the question mark is the condition - i.e: (magnitudes[i + 1]
+        // after ? are the expressions that indicate what to do if true
+        // after the colon : is what to do if false 
+          // so in familar terms
+              // if (magnitudes[i + 1])
+                  // TRUE then: magnitudes[i] + "&ndash;" + magnitudes[i + 1] + "<br>" 
+                      // TRUE is returned when there is another number coming up next in the array
+                      // this finds the start of the range, creates a dash, finds the end of the range then creates a line break
+                  // FALSE then:  magnitudes[i] + "+" 
+                      // FALSE is returned if there is no number coming up next in the array 
+                      // on the last iteration, there is no number, so it returns the last iteration # followed by the + sign
+      magnitudes[i] + (magnitudes[i + 1] ? "&ndash;" + magnitudes[i + 1] + "<br>" : "+");
+ }
+  return div;
+};
+
+legend.addTo(map);
+
